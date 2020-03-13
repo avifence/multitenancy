@@ -64,7 +64,7 @@ mod_download:
 
 # Lint files
 lint: ${GOLANGCI_LINT}
-	${GOLANGCI_LINT} run -v
+	${GOLANGCI_LINT} run -v --timeout 300s
 
 # Tests
 test:
