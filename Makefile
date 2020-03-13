@@ -31,6 +31,9 @@ IMAGE_TAG ?= configurator/multitenancy-controller
 build:
 	docker build -t ${IMAGE_TAG} -f build/Dockerfile --build-arg GIT_COMMIT=`git rev-parse HEAD` .
 
+build_bin:
+	go build -a -v -o build/_output/bin/multitenancy -ldflags -X=github.com/configurator/multitenancy/version.CommitSHA=`git rev-parse HEAD` cmd/manager/main.go
+
 # Pushes the docker image to a registry
 push: build
 	docker push ${IMAGE_TAG}
@@ -56,10 +59,15 @@ ${GOLANGCI_LINT}:
 	chmod +x $(dir ${GOLANGCI_LINT})golangci-lint-${GOLANGCI_VERSION}-$(shell uname | tr A-Z a-z)-amd64/golangci-lint
 	ln -s golangci-lint-${GOLANGCI_VERSION}-$(shell uname | tr A-Z a-z)-amd64/golangci-lint ${GOLANGCI_LINT}
 
-lint: ${GOLANGCI_LINT}
+mod_download:
+	go mod download
+
+# Lint files
+lint: ${GOLANGCI_LINT} mod_download
 	${GOLANGCI_LINT} run -v
 
-test:
+# Tests
+test: mod_download
 	echo 'no tests yet'
 
 ##
