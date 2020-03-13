@@ -63,11 +63,11 @@ mod_download:
 	go mod download
 
 # Lint files
-lint: ${GOLANGCI_LINT} mod_download
+lint: ${GOLANGCI_LINT}
 	${GOLANGCI_LINT} run -v
 
 # Tests
-test: mod_download
+test:
 	echo 'no tests yet'
 
 ##
