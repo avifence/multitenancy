@@ -28,9 +28,8 @@ IMAGE_TAG ?= configurator/multitenancy-controller
 
 # Build the operator docker image
 .PHONY: build
-LD_FLAGS ?= -ldflags -X=github.com/configurator/multitenancy/version.CommitSHA=`git rev-parse HEAD`
-build: ${OPERATOR_SDK}
-	CGO_ENABLED=${CGO_ENABLED} GOOS=linux ${OPERATOR_SDK} build ${IMAGE_TAG} --go-build-args "${LD_FLAGS}"
+build:
+	docker build -t ${IMAGE_TAG} -f build/Dockerfile --build-arg GIT_COMMIT=`git rev-parse HEAD` .
 
 # Pushes the docker image to a registry
 push: build
