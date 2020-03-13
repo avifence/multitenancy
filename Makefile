@@ -59,6 +59,9 @@ ${GOLANGCI_LINT}:
 lint: ${GOLANGCI_LINT}
 	${GOLANGCI_LINT} run -v
 
+test:
+	echo 'no tests yet'
+
 ##
 # Kind helpers for local testing
 ##
