@@ -9,6 +9,7 @@
 kubectl apply -f https://raw.githubusercontent.com/configurator/multitenancy/master/deployment/multitenancy.yaml
 ```
 
+
 ## Example
 
 And you have a few items deployed:
