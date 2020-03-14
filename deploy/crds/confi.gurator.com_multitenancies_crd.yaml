@@ -10,8 +10,6 @@ spec:
     plural: multitenancies
     singular: multitenancy
   scope: Namespaced
-  subresources:
-    status: {}
   validation:
     openAPIV3Schema:
       description: MultiTenancy is the Schema for the multitenancys API
@@ -5858,6 +5856,7 @@ spec:
           - tenancyKind
           type: object
         status:
+          description: MultiTenancyStatus reflects the observed state of a multitenancy
           properties:
             availableReplicas:
               description: Total number of available pods (ready for at least minReadySeconds)

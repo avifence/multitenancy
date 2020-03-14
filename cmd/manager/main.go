@@ -13,6 +13,7 @@ import (
 
 	"github.com/configurator/multitenancy/pkg/apis"
 	"github.com/configurator/multitenancy/pkg/controller"
+	"github.com/configurator/multitenancy/pkg/controller/multitenancy"
 	"github.com/configurator/multitenancy/pkg/eventhooks"
 	"github.com/configurator/multitenancy/pkg/webhook"
 	"github.com/configurator/multitenancy/version"
@@ -35,11 +36,12 @@ import (
 
 // Change below variables to serve metrics on different host or port.
 var (
-	metricsHost               = "0.0.0.0"
-	metricsPort         int32 = 8383
-	operatorMetricsPort int32 = 8686
-	webhookCertDir      string
-	webhookEnabled      bool
+	metricsHost                     = "0.0.0.0"
+	metricsPort               int32 = 8383
+	operatorMetricsPort       int32 = 8686
+	webhookCertDir            string
+	webhookEnabled            bool
+	multitenancyStatusEnabled bool
 )
 var log = logf.Log.WithName("cmd")
 
@@ -63,9 +65,11 @@ func main() {
 
 	pflag.BoolVar(&webhookEnabled, "enable-webhook", false, "Enables the webhook server")
 	pflag.StringVar(&webhookCertDir, "tls-cert-dir", "/etc/webhook/certs", "The directory with a tls.key and tls.crt for serving HTTPS requests")
+	pflag.BoolVar(&multitenancyStatusEnabled, "enable-multitenancy-status", false, "Whether to enable multitenancy status updates")
 
 	pflag.Parse()
 
+	multitenancy.SetStatusSync(multitenancyStatusEnabled)
 	// Use a zap logr.Logger implementation. If none of the zap
 	// flags are configured (or if the zap flag set is not being
 	// used), this defaults to a production zap logger.

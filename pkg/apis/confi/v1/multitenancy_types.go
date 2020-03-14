@@ -74,6 +74,7 @@ type SlackConfig struct {
 	WebhookURL string `json:"webhookURL"`
 }
 
+// MultiTenancyStatus reflects the observed state of a multitenancy
 type MultiTenancyStatus struct {
 	// The generation observed by the deployment controller.
 	// +optional
@@ -106,9 +107,10 @@ type MultiTenancyStatus struct {
 	UnavailableReplicas int32 `json:"unavailableReplicas,omitempty"`
 }
 
+// https://github.com/jetstack/cert-manager/issues/2200 +kubebuilder:subresource:status
+
 // MultiTenancy is the Schema for the multitenancys API
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:subresource:status
 // +k8s:openapi-gen=true
 type MultiTenancy struct {
 	metav1.TypeMeta   `json:",inline"`

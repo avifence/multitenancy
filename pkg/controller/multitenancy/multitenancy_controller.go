@@ -20,6 +20,11 @@ import (
 )
 
 var log = logf.Log.WithName("controller_multitenancy")
+var statusEnabled bool
+
+func SetStatusSync(enabled bool) {
+	statusEnabled = enabled
+}
 
 // Add creates a new MultiTenancy Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -102,35 +107,35 @@ func (r *ReconcileMultiTenancy) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	// Do a status update for the multitenancy object
-	reqLogger.Info("Determining current multitenancy status")
-	newStatus, err := getMultiTenancyStatus(r.client, instance, tenants)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	reqLogger.Info("Current status", "Status", newStatus)
-	// Only update the status if it has changed - otherwise we get caught in a reconcile loop
-	if !newStatus.EqualTo(&instance.Status) {
-		reqLogger.Info("Publishing status update")
-		instance.Status = newStatus
-		if err = r.client.Status().Update(context.TODO(), instance); err != nil {
+	res := reconcile.Result{}
+	if statusEnabled {
+		// Do a status update for the multitenancy object
+		reqLogger.Info("Determining current multitenancy status")
+		newStatus, err := getMultiTenancyStatus(r.client, instance, tenants)
+		if err != nil {
 			return reconcile.Result{}, err
 		}
-	}
-
-	var res reconcile.Result
-	if newStatus.AvailableReplicas != newStatus.Replicas {
-		// let's make sure we check again in a bit - though a pod becoming available will also requeue us.
-		// so this is really just an extra safety belt.
-		reqLogger.Info("Not all desired replicas are available. Requeuing a status check in 5 seconds.")
-		res = reconcile.Result{
-			Requeue:      true,
-			RequeueAfter: time.Duration(5) * time.Second,
+		reqLogger.Info("Current status", "Status", newStatus)
+		// Only update the status if it has changed - otherwise we get caught in a reconcile loop
+		if !newStatus.EqualTo(&instance.Status) {
+			reqLogger.Info("Publishing status update")
+			instance.Status = newStatus
+			if err = r.client.Status().Update(context.TODO(), instance); err != nil {
+				return reconcile.Result{}, err
+			}
 		}
-	} else {
-		res = reconcile.Result{}
+		if newStatus.AvailableReplicas != newStatus.Replicas {
+			// let's make sure we check again in a bit - though a pod becoming available will also requeue us.
+			// so this is really just an extra safety belt.
+			reqLogger.Info("Not all desired replicas are available. Requeuing a status check in 5 seconds.")
+			res = reconcile.Result{
+				Requeue:      true,
+				RequeueAfter: time.Duration(5) * time.Second,
+			}
+		} else {
+			res = reconcile.Result{}
+		}
 	}
-
 	// Run the garbage collection and if nothing goes wrong go ahead and either requeue for a status change
 	// or end the loop
 	reqLogger.Info("Running garbage collection")
