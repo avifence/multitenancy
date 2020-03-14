@@ -68,7 +68,7 @@ lint: ${GOLANGCI_LINT}
 
 # Tests
 test:
-	echo 'no tests yet'
+	echo 'no tests yet, but soon'
 
 ##
 # Kind helpers for local testing
