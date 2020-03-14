@@ -40,6 +40,8 @@ spec:
                   events:
                     description: A list of lifecycle events that trigger the hook
                     items:
+                      description: LifecycleEvent is defined as a type to signify
+                        intent
                       type: string
                     type: array
                   logConfig:
@@ -5856,7 +5858,6 @@ spec:
           - tenancyKind
           type: object
         status:
-          description: MultiTenancyStatus defines the observed state of MultiTenancy
           properties:
             availableReplicas:
               description: Total number of available pods (ready for at least minReadySeconds)

@@ -74,7 +74,6 @@ type SlackConfig struct {
 	WebhookURL string `json:"webhookURL"`
 }
 
-// MultiTenancyStatus defines the observed state of MultiTenancy
 type MultiTenancyStatus struct {
 	// The generation observed by the deployment controller.
 	// +optional
