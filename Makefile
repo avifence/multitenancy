@@ -23,6 +23,7 @@ endif
 # Download URL for Operator SDK based off version and platform
 OPERATOR_SDK_DOWNLOAD_URL ?= https://github.com/operator-framework/operator-sdk/releases/download/${SDK_VERSION}/operator-sdk-${SDK_VERSION}-x86_64-${SDK_PLATFORM}
 
+
 # Image Options
 IMAGE_TAG ?= configurator/multitenancy-controller
 
