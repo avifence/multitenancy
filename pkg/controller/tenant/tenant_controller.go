@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	confiv1 "github.com/configurator/multitenancy/pkg/apis/confi/v1"
 	eventhooks "github.com/configurator/multitenancy/pkg/eventhooks"
@@ -257,7 +258,7 @@ func (r *ReconcileTenant) runFinalizers(reqLogger logr.Logger, tenant *confiv1.T
 
 	mt, err := tenant.GetTenancy(r.client)
 	if err != nil {
-		if kerrors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) || strings.Contains(err.Error(), "not locate") {
 			reqLogger.Info("Parent multitenancy object appears to have been deleted, unable to check lifecycle hooks")
 			return r.removeFinalizer(reqLogger, tenant)
 		}
