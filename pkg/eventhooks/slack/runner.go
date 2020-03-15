@@ -23,7 +23,7 @@ func NewRunner(conf *confiv1.SlackConfig) runner.HookRunner {
 
 func (s *slackRunner) RunCreateHook(clientset *kubernetes.Clientset, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
 	text := fmt.Sprintf("A new tenant has been created for multitenancy _%s_", mt.GetName())
-	return s.send(newPayload(text, newAttachment(mt, tenant, "Updated", "#5A8D03")))
+	return s.send(newPayload(text, newAttachment(mt, tenant, "Created", "#5A8D03")))
 }
 
 func (s *slackRunner) RunUpdateHook(clientset *kubernetes.Clientset, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
