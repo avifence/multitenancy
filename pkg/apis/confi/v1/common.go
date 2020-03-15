@@ -28,6 +28,7 @@ const (
 	MultiTenancyLabel         = "confi.gurator.com/multitenancy"
 	ManagedByLabel            = "confi.gurator.com/manged-by"
 	TenancyKindLabel          = "confi.gurator.com/tenancy-kind"
+	CreateHookFiredLabel      = "confi.gurator.com/create-hook-finished"
 	ManagedByLabelValue       = "multitenancy_controller"
 
 	// Finalizers

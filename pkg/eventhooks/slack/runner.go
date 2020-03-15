@@ -11,6 +11,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+var multitenancyEmoji = ":monkey_face:"
+
 type slackRunner struct {
 	config *confiv1.SlackConfig
 }
@@ -20,30 +22,46 @@ func NewRunner(conf *confiv1.SlackConfig) runner.HookRunner {
 }
 
 func (s *slackRunner) RunCreateHook(clientset *kubernetes.Clientset, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
-	return nil
+	text := fmt.Sprintf("A new tenant has been created for multitenancy _%s_", mt.GetName())
+	return s.send(newPayload(text, newAttachment(mt, tenant, "Updated", "#5A8D03")))
 }
 
 func (s *slackRunner) RunUpdateHook(clientset *kubernetes.Clientset, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
-	return nil
+	text := fmt.Sprintf("The _%s_ tenant _%s_ in namespace _%s_ has been updated", mt.GetName(), tenant.GetName(), tenant.GetNamespace())
+	return s.send(newPayload(text, newAttachment(mt, tenant, "Updated", "#F9A602")))
 }
 
 func (s *slackRunner) RunDeleteHook(clientset *kubernetes.Clientset, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant, logLines []string) error {
-	attachment1 := slackhook.Attachment{}
-	attachment1.AddField(slackhook.Field{Title: "Status", Value: "Deleted"}).
-		AddField(slackhook.Field{Title: "Tenant", Value: tenant.GetName()}).
-		AddField(slackhook.Field{Title: "Multitenancy", Value: mt.GetName()})
-	attachment1.Color = util.StringPtr("#FF0000")
-	text := fmt.Sprintf("The _%s_ tenant _%s_ in namespace %s _has_ been deleted", mt.GetName(), tenant.GetName(), tenant.GetNamespace())
+	text := fmt.Sprintf("The _%s_ tenant _%s_ in namespace _%s_ has been deleted", mt.GetName(), tenant.GetName(), tenant.GetNamespace())
 	if len(logLines) > 0 {
 		text = text + fmt.Sprintf("\n\n*Final Logs*\n```\n%s```\n", strings.Join(logLines, "\n"))
 	}
-	payload := slackhook.Payload{
+	return s.send(newPayload(text, newAttachment(mt, tenant, "Deleted", "#FF0000")))
+}
+
+func newAttachment(mt *confiv1.MultiTenancy, tenant *confiv1.Tenant, status, color string) slackhook.Attachment {
+	attachment := slackhook.Attachment{}
+	attachment.AddField(slackhook.Field{Title: "Status", Value: status}).
+		AddField(slackhook.Field{Title: "Tenant", Value: tenant.GetName()}).
+		AddField(slackhook.Field{Title: "Multitenancy", Value: mt.GetName()})
+	attachment.Color = util.StringPtr(color)
+	return attachment
+}
+
+func newPayload(text string, attachment slackhook.Attachment) slackhook.Payload {
+	return slackhook.Payload{
 		Text:        text,
 		Username:    "multitenancy",
-		IconEmoji:   ":monkey_face:",
-		Attachments: []slackhook.Attachment{attachment1},
+		IconEmoji:   multitenancyEmoji,
+		Attachments: []slackhook.Attachment{attachment},
 	}
-	errs := slackhook.Send(s.config.WebhookURL, "", payload)
+}
+
+func (s *slackRunner) send(payload slackhook.Payload) error {
+	return checkSlackErrors(slackhook.Send(s.config.WebhookURL, "", payload))
+}
+
+func checkSlackErrors(errs []error) error {
 	if len(errs) > 0 {
 		return fmt.Errorf("%+v", errs)
 	}

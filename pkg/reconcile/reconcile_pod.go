@@ -15,18 +15,18 @@ import (
 // ReconcilePod will ensure a pod exists for a tenant, and that its spec matches
 // the desired configuration. If there has been a configmap update and the pod
 // still requests a data volume, it will also be recreated.
-func ReconcilePod(c client.Client, reqLogger logr.Logger, mt *confiv1.MultiTenancy, pod *corev1.Pod, recreatedConfig bool) error {
+func ReconcilePod(c client.Client, reqLogger logr.Logger, mt *confiv1.MultiTenancy, pod *corev1.Pod, recreatedConfig bool) (created, updated bool, err error) {
 	// Check if this Pod already exists
 	found := &corev1.Pod{}
-	err := c.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	err = c.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
 	if err != nil {
 		if kerrors.IsNotFound(err) {
 			// Pod doesn't exist - create it
 			reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-			return c.Create(context.TODO(), pod)
+			return true, false, c.Create(context.TODO(), pod)
 		}
 		// A different error when trying to get the pod
-		return err
+		return false, false, err
 	}
 
 	// Pod already exists - check if its spec is identical to what we would create
@@ -34,11 +34,11 @@ func ReconcilePod(c client.Client, reqLogger logr.Logger, mt *confiv1.MultiTenan
 		// Pod spec is different - recreate it
 		// This will trigger recreation because we watch for pod deletions
 		reqLogger.Info("Reconciler found pod already exists - recreating pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		return c.Delete(context.TODO(), found)
+		return false, true, c.Delete(context.TODO(), found)
 	}
 
 	reqLogger.Info("Pod spec and config are in sync - no changes necessary", "Pod.Namespace", found.Namespace, "Pod.Name", found.Name)
-	return nil
+	return false, false, nil
 }
 
 // podNeedsRecreate returns true if any of the conditions for which we'd want to

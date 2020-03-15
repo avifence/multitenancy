@@ -164,8 +164,19 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	// reconcile pod and configmap for tenant
-	if err := r.reconcileItemsForResource(reqLogger, mt, instance); err != nil {
+	created, updated, err := r.reconcileItemsForResource(reqLogger, mt, instance)
+	if err != nil {
 		return reconcile.Result{}, err
+	}
+
+	if created {
+		if err := r.checkCreateHooks(mt, instance); err != nil {
+			return reconcile.Result{}, err
+		}
+	} else if updated {
+		if err := r.runUpdateHooks(mt, instance); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	// ensure a tenace label on the tenant object for lookup purposes
@@ -199,27 +210,24 @@ func (r *ReconcileTenant) ensureTenantLabels(reqLogger logr.Logger, mt *confiv1.
 
 // createItems returns all the items we would create if this were a new deployment
 // these items should later be compared with the actual state to reconcile
-func (r *ReconcileTenant) reconcileItemsForResource(reqLogger logr.Logger, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
+func (r *ReconcileTenant) reconcileItemsForResource(reqLogger logr.Logger, mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) (created, updated bool, err error) {
 	configMap, err := resources.NewConfigMapForTenant(mt, tenant)
 	if err != nil {
-		return err
+		return false, false, err
 	}
 
 	recreatedConfig, err := confireconcile.ReconcileConfigMap(r.client, reqLogger, mt, configMap)
 	if err != nil {
-		return err
+		return false, false, err
 	}
 
 	// Create a Pod for the workload
 	pod, err := resources.NewPodForTenant(mt, tenant)
 	if err != nil {
-		return err
-	}
-	if err = confireconcile.ReconcilePod(r.client, reqLogger, mt, pod, recreatedConfig); err != nil {
-		return err
+		return false, false, err
 	}
 
-	return nil
+	return confireconcile.ReconcilePod(r.client, reqLogger, mt, pod, recreatedConfig)
 }
 
 // ensureTenantFinalizer ensures that a finalizer is attached to the given tenant instance
@@ -263,4 +271,32 @@ func (r *ReconcileTenant) runFinalizers(reqLogger logr.Logger, tenant *confiv1.T
 	}
 
 	return r.removeFinalizer(reqLogger, tenant)
+}
+
+// checkCreateHooks checks if a create hook needs to run for a tenant and runs if
+// necessary
+func (r *ReconcileTenant) checkCreateHooks(mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
+	if _, ok := tenant.GetLabels()[confiv1.CreateHookFiredLabel]; !ok {
+		for _, hook := range mt.GetCreateHooks() {
+			if err := eventhooks.ExecuteHook(confiv1.CreatedEvent, hook, mt, tenant); err != nil {
+				return err
+			}
+		}
+		tenant.Labels[confiv1.CreateHookFiredLabel] = "true"
+		if err := r.client.Update(context.TODO(), tenant); err != nil {
+			return err
+		}
+		return r.client.Get(context.TODO(), tenant.NamespacedName(), tenant)
+	}
+	return nil
+}
+
+// runUpdateHook will run any update hooks for a given tenant
+func (r *ReconcileTenant) runUpdateHooks(mt *confiv1.MultiTenancy, tenant *confiv1.Tenant) error {
+	for _, hook := range mt.GetUpdateHooks() {
+		if err := eventhooks.ExecuteHook(confiv1.UpdatedEvent, hook, mt, tenant); err != nil {
+			return err
+		}
+	}
+	return nil
 }
