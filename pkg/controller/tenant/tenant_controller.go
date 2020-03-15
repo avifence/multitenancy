@@ -163,6 +163,11 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, nil
 	}
 
+	// ensure a tenant label on the tenant object for lookup purposes
+	if err := r.ensureTenantLabels(reqLogger, mt, instance); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	// reconcile pod and configmap for tenant
 	created, updated, err := r.reconcileItemsForResource(reqLogger, mt, instance)
 	if err != nil {
@@ -177,11 +182,6 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		if err := r.runUpdateHooks(mt, instance); err != nil {
 			return reconcile.Result{}, err
 		}
-	}
-
-	// ensure a tenace label on the tenant object for lookup purposes
-	if err := r.ensureTenantLabels(reqLogger, mt, instance); err != nil {
-		return reconcile.Result{}, err
 	}
 
 	return reconcile.Result{}, r.ensureTenantFinalizer(reqLogger, instance)
