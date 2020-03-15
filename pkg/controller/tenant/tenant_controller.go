@@ -11,7 +11,7 @@ import (
 	util "github.com/configurator/multitenancy/pkg/util"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -135,7 +135,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 	instance := &confiv1.Tenant{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -257,11 +257,11 @@ func (r *ReconcileTenant) runFinalizers(reqLogger logr.Logger, tenant *confiv1.T
 
 	mt, err := tenant.GetTenancy(r.client)
 	if err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			return err
+		if kerrors.IsNotFound(err) {
+			reqLogger.Info("Parent multitenancy object appears to have been deleted, unable to check lifecycle hooks")
+			return r.removeFinalizer(reqLogger, tenant)
 		}
-		reqLogger.Info("Parent multitenancy object appears to have been deleted, unable to check lifecycle hooks")
-		return r.removeFinalizer(reqLogger, tenant)
+		return err
 	}
 
 	for _, hook := range mt.GetDeleteHooks() {
