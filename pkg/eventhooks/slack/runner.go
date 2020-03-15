@@ -7,6 +7,7 @@ import (
 	slackhook "github.com/ashwanthkumar/slack-go-webhook"
 	confiv1 "github.com/configurator/multitenancy/pkg/apis/confi/v1"
 	"github.com/configurator/multitenancy/pkg/eventhooks/runner"
+	"github.com/configurator/multitenancy/pkg/util"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -31,7 +32,8 @@ func (s *slackRunner) RunDeleteHook(clientset *kubernetes.Clientset, mt *confiv1
 	attachment1.AddField(slackhook.Field{Title: "Status", Value: "Deleted"}).
 		AddField(slackhook.Field{Title: "Tenant", Value: tenant.GetName()}).
 		AddField(slackhook.Field{Title: "Multitenancy", Value: mt.GetName()})
-	text := fmt.Sprintf("%s tenant %s in namespace %s has been deleted", mt.GetName(), tenant.GetName(), tenant.GetNamespace())
+	attachment1.Color = util.StringPtr("#FF0000")
+	text := fmt.Sprintf("The _%s_ tenant _%s_ in namespace %s _has_ been deleted", mt.GetName(), tenant.GetName(), tenant.GetNamespace())
 	if len(logLines) > 0 {
 		text = text + fmt.Sprintf("\n\n*Final Logs*\n```\n%s```\n", strings.Join(logLines, "\n"))
 	}
