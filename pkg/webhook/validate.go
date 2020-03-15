@@ -41,7 +41,7 @@ func (s *webhookServer) validateApply(req *admissionv1beta1.AdmissionRequest) *a
 			webhooklog.Error(err, "Could not unmarshal raw object")
 			return notAllowed(err.Error(), metav1.StatusReasonBadRequest)
 		}
-		return s.validateTenant(tenant)
+		return s.validateTenant(req, tenant)
 
 	default:
 		return notAllowed(fmt.Sprintf("Unexpected resource kind: %s", req.Kind.Kind), metav1.StatusReasonBadRequest)
@@ -58,10 +58,17 @@ func (s *webhookServer) validateDelete(req *admissionv1beta1.AdmissionRequest) *
 }
 
 // validateTenant returns whether the provided tenant spec is valid and should be allowed.
-func (s *webhookServer) validateTenant(tenant *v1.Tenant) *admissionv1beta1.AdmissionResponse {
+func (s *webhookServer) validateTenant(req *admissionv1beta1.AdmissionRequest, tenant *v1.Tenant) *admissionv1beta1.AdmissionResponse {
 	// Make sure the multitenancy exists
 	if _, err := tenant.GetTenancy(s.client); err != nil {
 		if kerrors.IsNotFound(err) {
+			if req.Operation == "UPDATE" {
+				// This could be us trying to remove a finalizer on a dead instance,
+				// let it through for now
+				return &admissionv1beta1.AdmissionResponse{
+					Allowed: true,
+				}
+			}
 			return notAllowed(fmt.Sprintf("There is no tenancy kind %s in namespace %s", tenant.TenancyKind, tenant.Namespace), metav1.StatusReasonNotFound)
 		}
 		return notAllowed(fmt.Sprintf("Unexpected API error during request: %s", err.Error()), metav1.StatusReasonBadRequest)
