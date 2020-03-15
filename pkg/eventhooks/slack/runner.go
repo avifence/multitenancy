@@ -9,7 +9,10 @@ import (
 	"github.com/configurator/multitenancy/pkg/eventhooks/runner"
 	"github.com/configurator/multitenancy/pkg/util"
 	"k8s.io/client-go/kubernetes"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+var log = logf.Log.WithName("slack_hook")
 
 var multitenancyEmoji = ":monkey_face:"
 
@@ -58,6 +61,7 @@ func newPayload(text string, attachment slackhook.Attachment) slackhook.Payload 
 }
 
 func (s *slackRunner) send(payload slackhook.Payload) error {
+	log.Info("Sending payload to slack hook", "Payload", payload)
 	return checkSlackErrors(slackhook.Send(s.config.WebhookURL, "", payload))
 }
 
