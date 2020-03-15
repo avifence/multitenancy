@@ -42,6 +42,8 @@ type EventHook struct {
 	// A list of lifecycle events that trigger the hook
 	Events []LifecycleEvent `json:"events"`
 
+	Type HookType `json:"type"`
+
 	// A log configuration to match when running event hooks (only applies to delete for now)
 	// +optional
 	LogConfig *LogConfig `json:"logConfig,omitempty"`

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	confiv1 "github.com/configurator/multitenancy/pkg/apis/confi/v1"
+	logrunner "github.com/configurator/multitenancy/pkg/eventhooks/log"
 	"github.com/configurator/multitenancy/pkg/eventhooks/runner"
 	"github.com/configurator/multitenancy/pkg/eventhooks/slack"
 	corev1 "k8s.io/api/core/v1"
@@ -62,10 +63,11 @@ func ExecuteHook(ev confiv1.LifecycleEvent, hook confiv1.EventHook, mt *confiv1.
 
 // getRunner returns the hook runner for the given eventhook configuration
 func getRunner(hook confiv1.EventHook) runner.HookRunner {
-	if hook.Slack != nil {
+	switch hook.Type {
+	case confiv1.HookTypeSlack:
 		return slack.NewRunner(hook.Slack)
 	}
-	return nil
+	return logrunner.NewRunner()
 }
 
 // getLogsForTenant returns the requested logs for a tenant's pod. Skip is true

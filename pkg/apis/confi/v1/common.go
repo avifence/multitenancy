@@ -12,6 +12,15 @@ const (
 	DeletedEvent = "deleted"
 )
 
+// +kubebuilder:validation:Enum=slack
+// HookType represents the backend configuration to use for an event hook
+type HookType string
+
+const (
+	// HookTypeSlack is the slack webhook integration for event hooks
+	HookTypeSlack HookType = "slack"
+)
+
 const (
 	// Labels and annotations
 	CreationSpecAnnotationKey = "confi.gurator.com/creation-spec"

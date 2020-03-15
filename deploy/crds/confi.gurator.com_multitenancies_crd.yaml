@@ -70,8 +70,15 @@ spec:
                     required:
                     - webhookURL
                     type: object
+                  type:
+                    description: HookType represents the backend configuration to
+                      use for an event hook
+                    enum:
+                    - slack
+                    type: string
                 required:
                 - events
+                - type
                 type: object
               type: array
             paused:

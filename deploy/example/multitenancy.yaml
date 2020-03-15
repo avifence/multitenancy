@@ -14,14 +14,14 @@ spec:
 
   # The paused field can be set to true to pause handling of this MultiTenancy
   # paused: false
-
-  eventHooks:
-    - events:
-        - deleted
-      logConfig:
-        regex: Apple
-      slack:
-        webhookURL: blah
+  #
+  # eventHooks:
+  #   - events:
+  #       - deleted
+  #     logConfig:
+  #       regex: Apple
+  #     slack:
+  #       webhookURL: blah
 
   # Standard selector and template definition, much like for Deployments or StatefulSets:
   selector:

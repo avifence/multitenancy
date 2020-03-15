@@ -3,12 +3,15 @@ module github.com/configurator/multitenancy
 go 1.14
 
 require (
+	github.com/ashwanthkumar/slack-go-webhook v0.0.0-20200209025033-430dd4e66960
 	github.com/go-logr/logr v0.1.0
 	github.com/operator-framework/operator-sdk v0.15.2
+	github.com/parnurzeal/gorequest v0.2.16 // indirect
 	github.com/spf13/pflag v1.0.5
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
+	moul.io/http2curl v1.0.0 // indirect
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
