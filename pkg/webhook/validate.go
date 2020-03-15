@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	v1 "github.com/configurator/multitenancy/pkg/apis/confi/v1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
@@ -61,7 +62,7 @@ func (s *webhookServer) validateDelete(req *admissionv1beta1.AdmissionRequest) *
 func (s *webhookServer) validateTenant(req *admissionv1beta1.AdmissionRequest, tenant *v1.Tenant) *admissionv1beta1.AdmissionResponse {
 	// Make sure the multitenancy exists
 	if _, err := tenant.GetTenancy(s.client); err != nil {
-		if kerrors.IsNotFound(err) {
+		if kerrors.IsNotFound(err) || strings.Contains(err.Error(), "not locate") {
 			if req.Operation == "UPDATE" {
 				// This could be us trying to remove a finalizer on a dead instance,
 				// let it through for now
